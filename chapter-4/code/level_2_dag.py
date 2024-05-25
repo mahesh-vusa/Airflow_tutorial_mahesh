@@ -9,19 +9,7 @@ args = {
 }
 
 GCP_PROJECT_ID = 'packt-data-eng-on-gcp'
-INSTANCE_NAME = 'mysql-instance'
-EXPORT_URI = 'gs://packt-data-eng-on-gcp-data-bucket/mysql_export/from_composer/stations/stations.csv'
-SQL_QUERY = "SELECT * FROM apps_db.stations"
 
-export_body = {
-    "exportContext": {
-        "fileType": "csv",
-        "uri": EXPORT_URI,
-        "csvExportOptions":{
-            "selectQuery": SQL_QUERY
-        }
-    }
-}
 
 with DAG(
     dag_id='level_2_dag_load_bigquery',
@@ -30,17 +18,12 @@ with DAG(
     start_date=days_ago(1),
 ) as dag:
 
-    sql_export_task = CloudSqlInstanceExportOperator(
-        project_id=GCP_PROJECT_ID, 
-        body=export_body, 
-        instance=INSTANCE_NAME, 
-        task_id='sql_export_task'
-    )
+    
 
     gcs_to_bq_example = GoogleCloudStorageToBigQueryOperator(
     task_id                             = "gcs_to_bq_example",
-    bucket                              = 'packt-data-eng-on-gcp-data-bucket',
-    source_objects                      = ['mysql_export/from_composer/stations/stations.csv'],
+    bucket                              = 'files_dag_creation',
+    source_objects                      = ['stations.csv'],
     destination_project_dataset_table   ='raw_bikesharing.stations',
     schema_fields=[
         {'name': 'station_id', 'type': 'STRING', 'mode': 'NULLABLE'},
